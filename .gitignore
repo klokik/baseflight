@@ -3,6 +3,8 @@
 *.uvopt
 *.dep
 *.bak
+*.swp
+*.sublime-workspace
 *.uvgui.*
 .project
 .settings
