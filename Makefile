@@ -14,7 +14,7 @@
 # Things that the user might override on the commandline
 #
 
-# The target to build, must be one of NAZE or CJMCU
+# The target to build, must be one of NAZE, CJMCU or DRONO
 TARGET		?= NAZE
 
 # Compile-time options
@@ -30,7 +30,7 @@ SERIAL_DEVICE	?= /dev/ttyUSB0
 # Things that need to be maintained as the source changes
 #
 
-VALID_TARGETS = NAZE CJMCU
+VALID_TARGETS = NAZE CJMCU DRONO
 
 # Working directories
 ROOT		 = $(dir $(lastword $(MAKEFILE_LIST)))
@@ -64,7 +64,7 @@ COMMON_SRC	 = buzzer.c \
 		   sbus.c \
 		   sumd.c \
 		   spektrum.c \
-		   startup_stm32f10x_md_gcc.S \
+		   startup_stm32f10x_md_vl.s \
 		   $(CMSIS_SRC) \
 		   $(STDPERIPH_SRC)
 
@@ -157,7 +157,7 @@ CFLAGS		 = $(ARCH_FLAGS) \
 		   -Wall -pedantic -Wextra -Wshadow -Wunsafe-loop-optimizations \
 		   -ffunction-sections \
 		   -fdata-sections \
-		   -DSTM32F10X_MD \
+		   -DSTM32F10X_MD_VL \
 		   -DUSE_STDPERIPH_DRIVER \
 		   -D$(TARGET)
 

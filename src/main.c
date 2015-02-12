@@ -52,7 +52,7 @@ int main(void)
     readEEPROM();
 
     // Configure clock, this figures out HSE for hardware autodetect
-    SetSysClock(mcfg.emf_avoidance);
+    // SetSysClock(mcfg.emf_avoidance);
 
     // determine hardware revision
     if (hse_value == 8000000)

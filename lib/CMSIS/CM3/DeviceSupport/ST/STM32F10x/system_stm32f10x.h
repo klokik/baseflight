@@ -51,6 +51,7 @@
   */
 
 extern uint32_t SystemCoreClock;          /*!< System Clock Frequency (Core Clock) */
+extern uint32_t hse_value;
 
 /**
   * @}
