@@ -12,8 +12,9 @@ int hw_revision = 0;
 
 extern rcReadRawDataPtr rcReadRawFunc;
 
-// receiver read function
+// receiver read functions
 extern uint16_t pwmReadRawRC(uint8_t chan);
+extern uint16_t i2cReadRawRC(uint8_t chan);
 
 // from system_stm32f10x.c
 static void SetSysClock(bool overclock);
@@ -172,7 +173,12 @@ int main(void)
     // configure PWM/CPPM read function and max number of channels. spektrum or sbus below will override both of these, if enabled
     for (i = 0; i < RC_CHANS; i++)
         rcData[i] = 1502;
+#ifndef DRONO
     rcReadRawFunc = pwmReadRawRC;
+#else
+    rcReadRawFunc = i2cReadRawRC;
+#endif
+
     core.numRCChannels = MAX_INPUTS;
 
     if (feature(FEATURE_SERIALRX)) {
