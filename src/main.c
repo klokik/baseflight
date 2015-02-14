@@ -16,7 +16,7 @@ extern rcReadRawDataPtr rcReadRawFunc;
 extern uint16_t pwmReadRawRC(uint8_t chan);
 
 // from system_stm32f10x.c
-void SetSysClock(bool overclock);
+static void SetSysClock(bool overclock);
 
 #ifdef USE_LAME_PRINTF
 // gcc/GNU version
@@ -53,6 +53,7 @@ int main(void)
 
     // Configure clock, this figures out HSE for hardware autodetect
     // SetSysClock(mcfg.emf_avoidance);
+    SystemInit();
 
     // determine hardware revision
     if (hse_value == 8000000)
@@ -61,6 +62,7 @@ int main(void)
         hw_revision = NAZE32_REV5;
 
     systemInit();
+
 #ifdef USE_LAME_PRINTF
     init_printf(NULL, _putc);
 #endif
@@ -125,19 +127,6 @@ int main(void)
     // if gyro was not detected due to whatever reason, we give up now.
     if (!sensorsOK)
         failureMode(3);
-
-    LED1_ON;
-    LED0_OFF;
-    for (i = 0; i < 10; i++) {
-        LED1_TOGGLE;
-        LED0_TOGGLE;
-        delay(25);
-        BEEP_ON;
-        delay(25);
-        BEEP_OFF;
-    }
-    LED0_OFF;
-    LED1_OFF;
 
     imuInit(); // Mag is initialized inside imuInit
     mixerInit(); // this will set core.useServo var depending on mixer type
