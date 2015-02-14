@@ -1,7 +1,12 @@
 #include "board.h"
 
 // L3G4200D, Standard address 0x68
-#define L3G4200D_ADDRESS         0x68
+#ifndef DRONO
+    #define L3G4200D_ADDRESS         0x68
+#else
+    #define L3G4200D_ADDRESS         0x69
+#endif
+
 #define L3G4200D_ID              0xD3
 #define L3G4200D_AUTOINCR        0x80
 
