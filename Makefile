@@ -15,7 +15,7 @@
 #
 
 # The target to build, must be one of NAZE, CJMCU or DRONO
-TARGET		?= NAZE
+TARGET		?= DRONO
 
 # Compile-time options
 OPTIONS		?=
@@ -64,7 +64,7 @@ COMMON_SRC	 = buzzer.c \
 		   sbus.c \
 		   sumd.c \
 		   spektrum.c \
-		   startup_stm32f10x_md_vl.s \
+		   startup_stm32f10x_md_gcc.S \
 		   $(CMSIS_SRC) \
 		   $(STDPERIPH_SRC)
 
@@ -104,6 +104,28 @@ CJMCU_SRC	 = drv_adc.c \
 		   drv_timer.c \
 		   $(COMMON_SRC)
 
+
+# Source files for the DRONO target
+DRONO_SRC	 = drv_adc.c \
+		   drv_adxl345.c \
+		   drv_ak8975.c \
+		   drv_bma280.c \
+		   drv_bmp085.c \
+		   drv_ms5611.c \
+		   drv_hmc5883l.c \
+		   drv_ledring.c \
+		   drv_mma845x.c \
+		   drv_mpu3050.c \
+		   drv_mpu6050.c \
+		   drv_mpu6500.c \
+		   drv_l3g4200d.c \
+		   drv_pwm.c \
+		   drv_spi.c \
+		   drv_timer.c \
+		   $(HIGHEND_SRC) \
+		   $(COMMON_SRC)
+
+
 # In some cases, %.s regarded as intermediate file, which is actually not.
 # This will prevent accidental deletion of startup code.
 .PRECIOUS: %.s
@@ -139,7 +161,7 @@ INCLUDE_DIRS	 = $(SRC_DIR) \
 ARCH_FLAGS	 = -mthumb -mcpu=cortex-m3
 
 ifeq ($(DEBUG),GDB)
-OPTIMIZE	 = -O0
+OPTIMIZE	 = -O3
 LTO_FLAGS	 = $(OPTIMIZE)
 else
 OPTIMIZE	 = -Os
@@ -157,7 +179,7 @@ CFLAGS		 = $(ARCH_FLAGS) \
 		   -Wall -pedantic -Wextra -Wshadow -Wunsafe-loop-optimizations \
 		   -ffunction-sections \
 		   -fdata-sections \
-		   -DSTM32F10X_MD_VL \
+		   -DSTM32F10X_MD \
 		   -DUSE_STDPERIPH_DRIVER \
 		   -D$(TARGET)
 
@@ -193,6 +215,7 @@ endif
 
 TARGET_HEX	 = $(BIN_DIR)/baseflight_$(TARGET).hex
 TARGET_ELF	 = $(BIN_DIR)/baseflight_$(TARGET).elf
+TARGET_BIN	 = $(BIN_DIR)/baseflight_$(TARGET).bin
 TARGET_OBJS	 = $(addsuffix .o,$(addprefix $(OBJECT_DIR)/$(TARGET)/,$(basename $($(TARGET)_SRC))))
 TARGET_MAP   = $(OBJECT_DIR)/baseflight_$(TARGET).map
 
@@ -201,6 +224,9 @@ TARGET_MAP   = $(OBJECT_DIR)/baseflight_$(TARGET).map
 
 $(TARGET_HEX): $(TARGET_ELF)
 	$(OBJCOPY) -O ihex --set-start 0x8000000 $< $@
+
+$(TARGET_BIN): $(TARGET_ELF)
+	$(OBJCOPY) -O binary --set-start 0x8000000 $< $@
 
 $(TARGET_ELF):  $(TARGET_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -222,9 +248,10 @@ $(OBJECT_DIR)/$(TARGET)/%.o): %.S
 	@$(CC) -c -o $@ $(ASFLAGS) $< 
 
 clean:
-	rm -f $(TARGET_HEX) $(TARGET_ELF) $(TARGET_OBJS) $(TARGET_MAP)
+	rm -f $(TARGET_HEX) $(TARGET_ELF) $(TARGET_BIN) $(TARGET_OBJS) $(TARGET_MAP)
 
 flash_$(TARGET): $(TARGET_HEX)
+	$(TARGET_BIN)
 	stty -F $(SERIAL_DEVICE) raw speed 115200 -crtscts cs8 -parenb -cstopb -ixon
 	echo -n 'R' >$(SERIAL_DEVICE)
 	stm32flash -w $(TARGET_HEX) -v -g 0x0 -b 115200 $(SERIAL_DEVICE)
@@ -233,6 +260,7 @@ flash: flash_$(TARGET)
 
 
 unbrick_$(TARGET): $(TARGET_HEX)
+	$(TARGET_BIN)
 	stty -F $(SERIAL_DEVICE) raw speed 115200 -crtscts cs8 -parenb -cstopb -ixon
 	stm32flash -w $(TARGET_HEX) -v -g 0x0 -b 115200 $(SERIAL_DEVICE)
 
