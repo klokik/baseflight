@@ -527,14 +527,20 @@ int Mag_getADC(void)
 
 void Sonar_init(void)
 {
+#ifndef DRONO
     hcsr04_init(sonar_rc78);
+#endif
     sensorsSet(SENSOR_SONAR);
     sonarAlt = 0;
 }
 
 void Sonar_update(void)
 {
+#ifndef DRONO
     hcsr04_get_distance(&sonarAlt);
+#else
+    sonarAlt = i2cSonarGetDistance();
+#endif
 }
 
 #endif
