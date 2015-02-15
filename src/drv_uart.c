@@ -100,7 +100,7 @@ uartPort_t *serialUSART2(uint32_t baudRate, portMode_t mode)
     return s;
 }
 
-// USART3 - Telemetry (RX/TX by DMA + REMAP)
+// USART3 - Telemetry (or GPS for Drono) (RX/TX by DMA + REMAP)
 uartPort_t *serialUSART3(uint32_t baudRate, portMode_t mode)
 {
     uartPort_t *s;
@@ -125,17 +125,25 @@ uartPort_t *serialUSART3(uint32_t baudRate, portMode_t mode)
     s->txDMAChannel = DMA1_Channel2;
 
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+    #ifdef DRONO
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+        GPIO_PinRemapConfig(GPIO_PartialRemap_USART3, ENABLE);
+    #endif
+    //  Regular
     // USART3_TX    PB10
     // USART3_RX    PB11
+    //  Drono
+    // USART3_TX    PC10
+    // USART3_RX    PC11    
     gpio.speed = Speed_2MHz;
     gpio.pin = Pin_10;
     gpio.mode = Mode_AF_PP;
     if (mode & MODE_TX)
-        gpioInit(GPIOB, &gpio);
+        gpioInit(GPIOC, &gpio);
     gpio.pin = Pin_11;
     gpio.mode = Mode_IPU;
     if (mode & MODE_RX)
-        gpioInit(GPIOB, &gpio);
+        gpioInit(GPIOC, &gpio);
 
     if (mode == MODE_RX) {
         // RX Interrupt

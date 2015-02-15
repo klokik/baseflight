@@ -170,7 +170,11 @@ void gpsInit(uint8_t baudrateIndex)
         core.gpsport = &(softSerialPorts[0].port);
     } else
         // Open GPS UART, no callback - buffer will be read out in gpsThread()
-        core.gpsport = uartOpen(USART2, NULL, gpsInitData[baudrateIndex].baudrate, mode);    // signal GPS "thread" to initialize when it gets to it
+        #ifndef DRONO
+            core.gpsport = uartOpen(USART2, NULL, gpsInitData[baudrateIndex].baudrate, mode);    // signal GPS "thread" to initialize when it gets to it
+        #else
+            core.gpsport = uartOpen(USART3, NULL, gpsInitData[baudrateIndex].baudrate, mode);
+        #endif
     // signal GPS "thread" to initialize when it gets to it
     gpsSetState(GPS_INITIALIZING);
 
