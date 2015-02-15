@@ -28,6 +28,9 @@
 #define REG_USART_ENABLE	0x4A
 #define REG_USART_BR_VAL0	0x4B
 
+
+// XXX: Figure out i2c bug
+
 uint16_t i2cReadRawRC(uint8_t chan)
 {
 	uint8_t buf[2];
@@ -41,7 +44,6 @@ uint16_t i2cReadRawRC(uint8_t chan)
 
 	uint16_t val = 1000+buf[0]*256+buf[1];
 	return val;
-	//return 1337;//val;
 }
 
 void i2cWriteMotor(uint8_t index, uint16_t value)
@@ -49,7 +51,9 @@ void i2cWriteMotor(uint8_t index, uint16_t value)
 	uint8_t buf[] = {(value-1000)/256,(value-1000)%256};
 
 	if (index < 4)
-		i2cWriteBuffer(DRONO_ADDRESS,REG_MOTOR_VAL0+index*2,2,&buf[0]);
+		for(int q=0;q<4;q++)
+			if(i2cWriteBuffer(DRONO_ADDRESS,REG_MOTOR_VAL0+index*2,2,&buf[0]))
+				break;
 }
 
 int32_t i2cSonarGetDistance(void)

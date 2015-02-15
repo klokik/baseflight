@@ -446,7 +446,11 @@ void writeMotors(void)
     uint8_t i;
 
     for (i = 0; i < numberMotor; i++)
+    #ifndef DRONO
         pwmWriteMotor(i, motor[i]);
+    #else
+        i2cWriteMotor(i, motor[i]);
+    #endif
 }
 
 void writeAllMotors(int16_t mc)
