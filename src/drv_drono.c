@@ -33,7 +33,10 @@ uint16_t i2cReadRawRC(uint8_t chan)
 	uint8_t buf[2];
 
 	for(int q=0;q<4;q++)
-		if(i2cRead(DRONO_ADDRESS,REG_RC_VAL0+chan*2,2,&buf[0]))
+		if(i2cRead(DRONO_ADDRESS,REG_RC_VAL0+chan*2,1,&buf[0]))
+			break;
+	for(int q=0;q<4;q++)
+		if(i2cRead(DRONO_ADDRESS,REG_RC_VAL0+chan*2+1,1,&buf[1]))
 			break;
 
 	uint16_t val = 1000+buf[0]*256+buf[1];
@@ -45,8 +48,8 @@ void i2cWriteMotor(uint8_t index, uint16_t value)
 {
 	uint8_t buf[] = {(value-1000)/256,(value-1000)%256};
 
-    if (index < 4)
-        i2cWriteBuffer(DRONO_ADDRESS,REG_MOTOR_VAL0+index*2,2,&buf[0]);
+	if (index < 4)
+		i2cWriteBuffer(DRONO_ADDRESS,REG_MOTOR_VAL0+index*2,2,&buf[0]);
 }
 
 int32_t i2cSonarGetDistance(void)
