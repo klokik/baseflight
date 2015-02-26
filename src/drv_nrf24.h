@@ -1,5 +1,8 @@
 #pragma once
 
+// The code is shamelesly stolen from Arduino library RF24 by J. Coliz <maniacbug@ymail.com> 2011
+// Ported to C language and baseflight project by M. Dolhyi <0xb000@gmail.com> 2015
+
 #if 1
 
 typedef enum { RF24_PA_MIN = 0,RF24_PA_LOW, RF24_PA_HIGH, RF24_PA_MAX, RF24_PA_ERROR } rf24_pa_dbm_e;
@@ -57,7 +60,7 @@ bool nrf_available(uint8_t* pipe_num);
 void nrf_startWrite(const void* buf, uint8_t len);
 void nrf_writeAckPayload(uint8_t pipe, const void* buf, uint8_t len);
 bool nrf_isAckPayloadAvailable(void);
-void nrf_whatHappened(bool& tx_ok,bool& tx_fail,bool& rx_ready);
+void nrf_whatHappened(bool* tx_ok,bool* tx_fail,bool* rx_ready);
 bool nrf_testCarrier(void);
 bool nrf_testRPD(void);
 bool nrf_isValid() { return ce_pin != 0xff && csn_pin != 0xff; }
