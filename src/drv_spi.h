@@ -3,6 +3,7 @@
 #define SPI_DEVICE_NONE     (0)
 #define SPI_DEVICE_FLASH    (1)
 #define SPI_DEVICE_MPU      (2)
+#define SPI_DEVICE_NRF24    (3)
 
 int spiInit(void);
 void spiSelect(bool select);
