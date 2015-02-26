@@ -268,6 +268,9 @@ void computeRC(void)
         static int rcAverageIndex = 0;
 
         for (chan = 0; chan < 8; chan++) {
+            #ifdef DRONO
+                i2cDronoCheckRC();
+            #endif
             capture = rcReadRawFunc(chan);
 
             // validate input

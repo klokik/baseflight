@@ -1,4 +1,5 @@
 #include "board.h"
+#include "mw.h"
 
 #define DRONO_ADDRESS 0x35
 
@@ -29,21 +30,43 @@
 #define REG_USART_BR_VAL0	0x4B
 
 
-// XXX: Figure out i2c bug
-
 uint16_t i2cReadRawRC(uint8_t chan)
 {
 	uint8_t buf[2];
 
-	for(int q=0;q<4;q++)
-		if(i2cRead(DRONO_ADDRESS,REG_RC_VAL0+chan*2,1,&buf[0]))
-			break;
-	for(int q=0;q<4;q++)
-		if(i2cRead(DRONO_ADDRESS,REG_RC_VAL0+chan*2+1,1,&buf[1]))
-			break;
+	bool ack;
+	uint8_t retries = 8;
+	do
+	{
+		ack = i2cRead(DRONO_ADDRESS,REG_RC_VAL0+chan*2,1,&buf[0]);
+	}while((!ack)&&--retries);
+	if(!retries) return 700;
+	retries = 8;
+	do
+	{
+		ack = i2cRead(DRONO_ADDRESS,REG_RC_VAL0+chan*2+1,1,&buf[1]);
+	}while((!ack)&&--retries);
+	if(!retries) return 700;
 
-	uint16_t val = 1000+buf[0]*256+buf[1];
+	uint16_t val = 1000u+buf[0]*256+buf[1];
 	return val;
+}
+
+void i2cDronoCheckRC(void)
+{
+	uint8_t buf[1];
+
+	bool ack;
+	uint8_t retries = 8;
+	do
+	{
+		ack = i2cRead(DRONO_ADDRESS,REG_RC_AVAIL,1,&buf[0]);
+	}while((!ack)&&--retries);
+
+	if((!retries)) return;
+
+	if(buf[0] == 1)
+		failsafeCnt = 0;
 }
 
 void i2cWriteMotor(uint8_t index, uint16_t value)
@@ -58,15 +81,27 @@ void i2cWriteMotor(uint8_t index, uint16_t value)
 
 int32_t i2cSonarGetDistance(void)
 {
-	return -1;
+	// return -1;
 	uint8_t buf[2];
 
-	if(i2cRead(DRONO_ADDRESS,REG_SONAR_AVAIL,1,&buf[0]))
+	bool ack;
+	uint8_t retries = 4;
+	do
 	{
-		i2cRead(DRONO_ADDRESS,REG_MOTOR_VAL0,2,&buf[0]);
+		ack = i2cRead(DRONO_ADDRESS,REG_RC_AVAIL,1,&buf[0]);
+	}while((!ack)&&--retries);
 
-		return buf[0]*256+buf[1];
-	}
+	if((!retries)||!buf[0]) return -1;
+
+	retries = 8;
+	do
+	{
+		ack = i2cRead(DRONO_ADDRESS,REG_SONAR_VAL0,1,&buf[0]);
+	}while((!ack)&&--retries);
+
+	debug[0] = buf[0];
+	if(retries)
+		return buf[0];
 
 	return -1;
 }
