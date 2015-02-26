@@ -122,6 +122,7 @@ DRONO_SRC	 = drv_adc.c \
 		   drv_pwm.c \
 		   drv_spi.c \
 		   drv_timer.c \
+		   drv_nrf24.c \
 		   drv_drono.c \
 		   $(HIGHEND_SRC) \
 		   $(COMMON_SRC)

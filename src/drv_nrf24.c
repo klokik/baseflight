@@ -17,7 +17,8 @@ typedef uint16_t prog_uint16_t;
 #define printf_P printf
 #define strlen_P strlen
 #define PROGMEM
-#define pgm_read_word(p) (*(p)) 
+#define pgm_read_word(p) (*(p))
+#define pgm_read_byte(p) (*(p)) 
 #define PRIPSTR "%s"
 
 #undef SERIAL_DEBUG
@@ -132,7 +133,12 @@ typedef uint16_t prog_uint16_t;
 #define RF_PWR_HIGH 2
 
 #define LOW   0
-#define HIGHT 1
+#define HIGH  1
+
+#define B111    (1|_BV(1)|_BV(2))
+#define B1111   (1|_BV(1)|_BV(2)|_BV(3))
+#define B111111 (1|_BV(1)|_BV(2)|_BV(3)|_BV(4)|_BV(5))
+#define B0100   (_BV(2))
 
 
 void nrf_csn(int mode)
@@ -153,12 +159,14 @@ void nrf_csn(int mode)
 void nrf_ce(int level)
 {
   if(level)
+  {
     digitalHi(GPIOB,ce_pin);
+  }
   else
     digitalLo(GPIOB,ce_pin);
 }
 
-uint8_t nrf_read_register(uint8_t reg, uint8_t* buf, uint8_t len)
+uint8_t nrf_read_register_ex(uint8_t reg, uint8_t* buf, uint8_t len)
 {
   uint8_t status;
 
@@ -182,7 +190,7 @@ uint8_t nrf_nrf_read_register(uint8_t reg)
   return result;
 }
 
-uint8_t nrf_write_register(uint8_t reg, const uint8_t* buf, uint8_t len)
+uint8_t nrf_write_register_ex(uint8_t reg, const uint8_t* buf, uint8_t len)
 {
   uint8_t status;
 
@@ -214,7 +222,7 @@ uint8_t nrf_write_payload(const void* buf, uint8_t len)
 {
   uint8_t status;
 
-  const uint8_t* current = reinterpret_cast<const uint8_t*>(buf);
+  const uint8_t* current = (const uint8_t*)(buf);
 
   uint8_t data_len = min(len,payload_size);
   uint8_t blank_len = dynamic_payloads_enabled ? 0 : payload_size - data_len;
@@ -235,7 +243,7 @@ uint8_t nrf_write_payload(const void* buf, uint8_t len)
 uint8_t nrf_read_payload(void* buf, uint8_t len)
 {
   uint8_t status;
-  uint8_t* current = reinterpret_cast<uint8_t*>(buf);
+  uint8_t* current = (uint8_t*)(buf);
 
   uint8_t data_len = min(len,payload_size);
   uint8_t blank_len = dynamic_payloads_enabled ? 0 : payload_size - data_len;
@@ -324,7 +332,7 @@ void nrf_print_address_register(const char* name, uint8_t reg, uint8_t qty)
   while (qty--)
   {
     uint8_t buffer[5];
-    nrf_read_register(reg++,buffer,sizeof buffer);
+    nrf_read_register_ex(reg++,buffer,sizeof buffer);
 
     printf_P(PSTR(" 0x"));
     uint8_t* bufptr = buffer + sizeof buffer;
@@ -335,7 +343,7 @@ void nrf_print_address_register(const char* name, uint8_t reg, uint8_t qty)
   printf_P(PSTR("\r\n"));
 }
 
-nrf_RF24(uint8_t _cepin, uint8_t _cspin)
+void nrf_RF24(uint8_t _cepin, uint8_t _cspin)
 {
   ce_pin = _cepin;
   csn_pin = _cspin;
@@ -402,31 +410,31 @@ static const char * const rf24_pa_dbm_e_str_P[] PROGMEM = {
 
 void nrf_printDetails(void)
 {
-  print_status(get_status());
+  nrf_print_status(nrf_get_status());
 
-  print_address_register(PSTR("RX_ADDR_P0-1"),RX_ADDR_P0,2);
-  print_byte_register(PSTR("RX_ADDR_P2-5"),RX_ADDR_P2,4);
-  print_address_register(PSTR("TX_ADDR"),TX_ADDR);
+  nrf_print_address_register(PSTR("RX_ADDR_P0-1"),RX_ADDR_P0,2);
+  nrf_print_byte_register(PSTR("RX_ADDR_P2-5"),RX_ADDR_P2,4);
+  nrf_print_address_register(PSTR("TX_ADDR"),TX_ADDR,1);
 
-  print_byte_register(PSTR("RX_PW_P0-6"),RX_PW_P0,6);
-  print_byte_register(PSTR("EN_AA"),EN_AA);
-  print_byte_register(PSTR("EN_RXADDR"),EN_RXADDR);
-  print_byte_register(PSTR("RF_CH"),RF_CH);
-  print_byte_register(PSTR("RF_SETUP"),RF_SETUP);
-  print_byte_register(PSTR("CONFIG"),CONFIG);
-  print_byte_register(PSTR("DYNPD/FEATURE"),DYNPD,2);
+  nrf_print_byte_register(PSTR("RX_PW_P0-6"),RX_PW_P0,6);
+  nrf_print_byte_register(PSTR("EN_AA"),EN_AA,1);
+  nrf_print_byte_register(PSTR("EN_RXADDR"),EN_RXADDR,1);
+  nrf_print_byte_register(PSTR("RF_CH"),RF_CH,1);
+  nrf_print_byte_register(PSTR("RF_SETUP"),RF_SETUP,1);
+  nrf_print_byte_register(PSTR("CONFIG"),CONFIG,1);
+  nrf_print_byte_register(PSTR("DYNPD/FEATURE"),DYNPD,2);
 
-  printf_P(PSTR("Data Rate\t = %S\r\n"),pgm_read_word(&rf24_datarate_e_str_P[getDataRate()]));
-  printf_P(PSTR("Model\t\t = %S\r\n"),pgm_read_word(&rf24_model_e_str_P[isPVariant()]));
-  printf_P(PSTR("CRC Length\t = %S\r\n"),pgm_read_word(&rf24_crclength_e_str_P[getCRCLength()]));
-  printf_P(PSTR("PA Power\t = %S\r\n"),pgm_read_word(&rf24_pa_dbm_e_str_P[getPALevel()]));
+  printf_P(PSTR("Data Rate\t = %S\r\n"),pgm_read_word(&rf24_datarate_e_str_P[nrf_getDataRate()]));
+  printf_P(PSTR("Model\t\t = %S\r\n"),pgm_read_word(&rf24_model_e_str_P[nrf_isPVariant()]));
+  printf_P(PSTR("CRC Length\t = %S\r\n"),pgm_read_word(&rf24_crclength_e_str_P[nrf_getCRCLength()]));
+  printf_P(PSTR("PA Power\t = %S\r\n"),pgm_read_word(&rf24_pa_dbm_e_str_P[nrf_getPALevel()]));
 }
 
 void nrf_begin(void)
 {
   // Initialize pins
   // TODO: init pins
-  pinMode(ce_pin,OUTPUT);
+  // pinMode(ce_pin,OUTPUT);
   // pinMode(csn_pin,OUTPUT);
 
   // Initialize SPI bus
@@ -491,7 +499,7 @@ void nrf_startListening(void)
 
   // Restore the pipe0 adddress, if exists
   if (pipe0_reading_address)
-    nrf_write_register(RX_ADDR_P0, reinterpret_cast<const uint8_t*>(&pipe0_reading_address), 5);
+    nrf_write_register_ex(RX_ADDR_P0, (const uint8_t*)(&pipe0_reading_address), 5);
 
   // Flush buffers
   nrf_flush_rx();
@@ -547,7 +555,7 @@ bool nrf_write( const void* buf, uint8_t len )
   const uint32_t timeout = 500; //ms to wait for timeout
   do
   {
-    status = nrf_read_register(OBSERVE_TX,&observe_tx,1);
+    status = nrf_read_register_ex(OBSERVE_TX,&observe_tx,1);
     IF_SERIAL_DEBUG(Serial.print(observe_tx,HEX));
   }
   while( ! ( status & ( _BV(TX_DS) | _BV(MAX_RT) ) ) && ( millis() - sent_at < timeout ) );
@@ -572,7 +580,7 @@ bool nrf_write( const void* buf, uint8_t len )
   // Handle the ack packet
   if ( ack_payload_available )
   {
-    ack_payload_length = getDynamicPayloadSize();
+    ack_payload_length = nrf_getDynamicPayloadSize();
     IF_SERIAL_DEBUG(Serial.print("[AckPacket]/"));
     IF_SERIAL_DEBUG(Serial.println(ack_payload_length,DEC));
   }
@@ -616,12 +624,12 @@ uint8_t nrf_getDynamicPayloadSize(void)
 
 bool nrf_available(void)
 {
-  return available(NULL);
+  return nrf_available_ex(NULL);
 }
 
-bool nrf_available(uint8_t* pipe_num)
+bool nrf_available_ex(uint8_t* pipe_num)
 {
-  uint8_t status = get_status();
+  uint8_t status = nrf_get_status();
 
   // Too noisy, enable if you really want lots o data!!
   //IF_SERIAL_DEBUG(print_status(status));
@@ -660,7 +668,7 @@ bool nrf_read( void* buf, uint8_t len )
   return nrf_read_register(FIFO_STATUS) & _BV(RX_EMPTY);
 }
 
-void nrf_whatHappened(bool* tx_ok,bool&* tx_fail,bool* rx_ready)
+void nrf_whatHappened(bool* tx_ok,bool* tx_fail,bool* rx_ready)
 {
   // Read the status & reset the status in one easy call
   // Or is that such a good idea?
@@ -677,8 +685,8 @@ void nrf_openWritingPipe(uint64_t value)
   // Note that AVR 8-bit uC's store this LSB first, and the NRF24L01(+)
   // expects it LSB first too, so we're good.
 
-  nrf_write_register(RX_ADDR_P0, reinterpret_cast<uint8_t*>(&value), 5);
-  nrf_write_register(TX_ADDR, reinterpret_cast<uint8_t*>(&value), 5);
+  nrf_write_register_ex(RX_ADDR_P0, (uint8_t*)(&value), 5);
+  nrf_write_register_ex(TX_ADDR, (uint8_t*)(&value), 5);
 
   const uint8_t max_payload_size = 32;
   nrf_write_register(RX_PW_P0,min(payload_size,max_payload_size));
@@ -709,9 +717,9 @@ void nrf_openReadingPipe(uint8_t child, uint64_t address)
   {
     // For pipes 2-5, only write the LSB
     if ( child < 2 )
-      nrf_write_register(pgm_read_byte(&child_pipe[child]), reinterpret_cast<const uint8_t*>(&address), 5);
+      nrf_write_register_ex(pgm_read_byte(&child_pipe[child]), (const uint8_t*)(&address), 5);
     else
-      nrf_write_register(pgm_read_byte(&child_pipe[child]), reinterpret_cast<const uint8_t*>(&address), 1);
+      nrf_write_register_ex(pgm_read_byte(&child_pipe[child]), (const uint8_t*)(&address), 1);
 
     nrf_write_register(pgm_read_byte(&child_payload_size[child]),payload_size);
 
@@ -781,7 +789,7 @@ void nrf_enableAckPayload(void)
 
 void nrf_writeAckPayload(uint8_t pipe, const void* buf, uint8_t len)
 {
-  const uint8_t* current = reinterpret_cast<const uint8_t*>(buf);
+  const uint8_t* current = (const uint8_t*)(buf);
 
   nrf_csn(LOW);
   spiTransferByte( W_ACK_PAYLOAD | ( pipe & B111 ) );
@@ -813,7 +821,7 @@ void nrf_setAutoAck(bool enable)
     nrf_write_register(EN_AA, 0);
 }
 
-void nrf_setAutoAck( uint8_t pipe, bool enable )
+void nrf_setAutoAck_ex( uint8_t pipe, bool enable )
 {
   if ( pipe <= 6 )
   {
@@ -1013,4 +1021,9 @@ void nrf_disableCRC( void )
 void nrf_setRetries(uint8_t delay, uint8_t count)
 {
  nrf_write_register(SETUP_RETR,(delay&0xf)<<ARD | (count&0xf)<<ARC);
+}
+
+bool nrf_isValid()
+{
+  return ce_pin != 0xff && csn_pin != 0xff;
 }

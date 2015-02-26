@@ -342,6 +342,7 @@ typedef struct baro_t {
 #include "drv_uart.h"
 #include "drv_softserial.h"
 // #include "drv_hcsr04.h"
+#include "drv_nrf24.h"
 #include "drv_drono.h"
 
 
